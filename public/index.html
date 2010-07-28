@@ -1,0 +1,124 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+"http://www.w3.org/TR/html4/loose.dtd">
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<title>Tweet Library for Arduino</title>
+<link rel="stylesheet" type="text/css" href="style.css" charset="UTF-8">
+<script type="text/javascript"><!--
+function step2() {
+	toggleDisplay(document.getElementById("step2"));
+}
+function step3() {
+	toggleDisplay(document.getElementById("step3"));
+}
+function toggleDisplay(ele) {
+	ele.style.display = ele.style.display == 'block' ? 'none' : 'block';
+}
+//--></script>
+
+</head>
+<body>
+<img src="ArduinoTweetLib.png" align="left">
+<div id="fc">
+<h1>Tweet Library for Arduino</h1>
+<hr>
+Post messages to Twitter (tweet) from <a target="arduino" href="http://www.arduino.cc/" class="ext"><b>Aruduino</b></a> with <a target="arduino" href="http://www.arduino.cc/en/Main/ArduinoEthernetShield" class="ext"><b>Ethernet Shield</b></a>!
+</div>
+<br style="clear:both">
+<div id="c">
+<h3>How to begin:</h3>
+<p class="step">Step <span class="n">1</span> : 
+	<a target="twitter" href="/request_token">Get a token to post a message using OAuth.</a></p>
+<p class="step">Step <span class="n">2</span> : 
+	<a href="javascript:step2()">Add some Libraries to your Arduino IDE.</a>
+	<div class="cd" id="step2"><ul>
+	<li>Download the <a href="ArduinoTweetLib.zip">Arduino Tweet Library</a> and put Twitter folder into ~/Documents/Arduino/libraries (Mac) or My Documents\Arduino\libraries\ (Windows). If there is no such folder, please create it.<br>
+	<li>Download the <a href="ArduinoEthernet.zip">Arduino Ethernet Library</a> and install <b><i>EthernetDNS</i></b> and <b><i>EthernetDHCP</i></b> into ~/Documents/Arduino/libraries (Mac) or My Documents\Arduino\libraries\ (Windows). EthernetDHCP is optional, but used in the sample sketch in step3.
+	<ul><li>EthernetDNS library in this archive is patched to avoid an error by CNAME entry in the DNS response. <b>Twitter library won't work without this patch</b>, so please replace it if you already have the library. Original version is distributed at <a href="http://gkaindl.com/software/arduino-ethernet">gkaindl.com</a>.</ul>
+	<li>Re-launch the IDE.
+	<li><a href="http://www.arduino.cc/en/Hacking/Libraries" class="ext" target="arduino">Detailed information about libraries installation</a>.
+	</div>
+</p>
+<p class="step">Step <span class="n">3</span> : 
+	<a href="javascript:step3()">Run a sample sketch to tweet!</a>
+	<div class="cd" id="step3">
+	You can get this sketch from File menu > Examples > Twitter > SimplePost .<br>
+	Don't forget to add your token into the sketch.
+	<hr><code><pre>
+#include &lt;Ethernet.h&gt;
+#include &lt;EthernetDHCP.h&gt;
+#include &lt;EthernetDNS.h&gt;
+#include &lt;Twitter.h&gt;
+
+byte mac[] = { 0xDE, 0xAD, 0xBE, 0xEF, 0xFE, 0xED };
+Twitter twitter("<b>&lt;&lt;&lt; your token here &gt;&gt;&gt;</b>");
+char msg[] = "Hello, World! I'm Arduino!";
+
+void setup()
+{
+  delay(1000);
+  EthernetDHCP.begin(mac);
+  Serial.begin(9600);
+  
+  Serial.println("connecting ...");
+  if (twitter.post(msg)) {
+    int status = twitter.wait();
+    if (status == 200) {
+      Serial.println("OK.");
+    } else {
+      Serial.print("failed : code ");
+      Serial.println(status);
+    }
+  } else {
+    Serial.println("connection failed.");
+  }
+}
+
+void loop()
+{
+  EthernetDHCP.maintain();
+}
+	</pre></code>
+	</div>
+</p>
+<br>
+<h3>Reference</h3>
+<p class="step">
+See <a href="http://www.arduino.cc/playground/Code/TwitterLibrary">Arduino: Playground</a>
+</p>
+<br>
+<h3>License</h3>
+<p class="step">
+Tweet Library for Arduino is distributed under MIT license.<br>
+<div id="emp"><small>
+<p>Copyright (c) 2010 NeoCat</p>
+
+<p>Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+</p><p>
+The above copyright notice and this permission notice shall be included in
+all copies or substantial portions of the Software.
+</p><p>
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+THE SOFTWARE.
+</p></small></div>
+
+ArduinoEthernet Library is distributed under <a href="http://www.gnu.org/licenses/gpl-2.0.html">GPLv2</a>.<br>
+</p>
+<br>
+<br>
+<br>
+</div>
+<center><small>&copy;2010 <a href="http://twitter.com/NeoCat">@NeoCat</small></center>
+</body>
+</html>

@@ -1,0 +1,42 @@
+body {
+	background-color: #eee;
+}
+
+h1, h3 {
+	font-family: "Comic Sans MS";
+}
+li {
+	margin-bottom: 1ex;
+}
+
+#fc {
+	float: left;
+	font-family: "Comic Sans MS";
+}
+#c {
+	margin-left: 100px;
+}
+.n {
+	font-size: 130%;
+	font-style: italic;
+}
+.ext {
+	color: black;
+}
+#emp {
+	border: dotted 2px black;
+	background-color: white;
+	margin: 10px;
+	padding: 10px;
+}
+.cd {
+	border: dotted 2px black;
+	background-color: white;
+	margin: 10px;
+	padding: 10px;
+	font-size: 90%;
+	display: none;
+}
+.step {
+	margin-left: 20px;
+}

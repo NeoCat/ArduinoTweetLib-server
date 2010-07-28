@@ -1,0 +1,3 @@
+application: arduino-tweet
+version: 1
+runtime: jruby

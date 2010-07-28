@@ -1,0 +1,28 @@
+*** arduino-tweet server for GAE ***
+This code is a server for ArduinoTweetLib for Google AppEngine.
+
+
+*** How to get started
+
+1. Install google-appengine gem.
+  # sudo gem install google-appengine
+
+2. Put your Twitter API Consumer key/secret into `arduino-tweet.rb'.
+
+3. Start app server at localhost.
+  $ dev_appserver.rb .
+  At the first time, gems needed are automatically installed into `.gem' directory.
+
+4. upload to GAE.
+  $ appcfg.rb update .
+
+
+*** About simple-oauth.rb
+
+The original code is from http://d.hatena.ne.jp/shibason/20090809/1249764381 .
+
+*added
+-request_token
+--get pin code address
+-access_token
+--get access token
