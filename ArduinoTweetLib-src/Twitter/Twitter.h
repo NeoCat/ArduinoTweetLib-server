@@ -7,12 +7,16 @@
   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. 
 */
 
+// ver1.2 - Use <Udp.h> to support IDE 0019 or later
+
 #ifndef TWITTER_H
 #define TWITTER_H
 
 #include <inttypes.h>
 #include <avr/pgmspace.h>
+#include <SPI.h>
 #include <Ethernet.h>
+#include <Udp.h>
 #include <EthernetDNS.h>
 
 class Twitter

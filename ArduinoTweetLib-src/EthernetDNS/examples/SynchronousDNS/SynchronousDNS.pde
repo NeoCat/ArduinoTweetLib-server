@@ -18,9 +18,14 @@
 //  <http://www.gnu.org/licenses/>.
 //
 
-//  Illustrates how to do non-blocking DNS queries via polling.
+// 2010-Oct-24  Modified by NeoCat :
+//   Use Udp library included in Arduino IDE 0019 or later.
 
+//  Illustrates how to do synchronous (blocking) DNS queries.
+
+#include <SPI.h>
 #include <Ethernet.h>
+#include <Udp.h>
 #include <EthernetDNS.h>
 
 byte mac[] = { 0xDE, 0xAD, 0xBE, 0xEF, 0xFE, 0xED };
@@ -41,7 +46,7 @@ void setup()
   
   Serial.begin(9600);
   Serial.println("Enter a host name via the Arduino Serial Monitor to have it "
-                 "resolved.");
+                 " resolved.");
   
   // You will often want to set your own DNS server IP address (that is
   // reachable from your Arduino board) before doing any DNS queries. Per
@@ -67,34 +72,16 @@ void loop()
     
     Serial.print("Resolving ");
     Serial.print(hostName);
-    Serial.print("...");
+    Serial.println("...");
     
-    // Let's send our DNS query. If anything other than DNSSuccess is returned,
-    // an error has occurred. A full list of possible return values is
-    // available in EthernetDNS.h
-    DNSError err = EthernetDNS.sendDNSQuery(hostName);
-
-    if (DNSSuccess == err) {
-      do {
-        // This will not wait for a reply, but return immediately if no reply
-        // is available yet. In this case, the return value is DNSTryLater.
-        // We can use this behavior to go on with our sketch while the DNS
-        // server and network are busy finishing our request, rather than
-        // being blocked and waiting.
-        err = EthernetDNS.pollDNSReply(ipAddr);
-			
-        if (DNSTryLater == err) {
-          // You could do real stuff here, or go on with a your loop(). I'm
-          // just printing some dots to signal that the query is being
-          // processed.
-          delay(20);
-          Serial.print(".");
-        }
-      } while (DNSTryLater == err);
-    }
-
-    Serial.println();
-
+    // Resolve the host name and block until a result has been obtained.
+    // This means that the call will not return until a result has been found
+    // or the query times out. While it is less effort to write a query this
+    // way, the problem is that the whole sketch will "hang", which might not
+    // be what you want. If you want to retain control over the sketch while
+    // the query is being processed, check out the PollingDNS example.
+    DNSError err = EthernetDNS.resolveHostName(hostName, ipAddr);
+    
     // Finally, we have a result. We're just handling the most common errors
     // here (success, timed out, not found) and just print others as an
     // integer. A full listing of possible errors codes is available in

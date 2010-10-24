@@ -1,12 +1,17 @@
+#include <SPI.h>
 #include <Ethernet.h>
-#include <EthernetDHCP.h>
+#include <Udp.h>
 #include <EthernetDNS.h>
 #include <Twitter.h>
 
+// Ethernet Shield Settings
 byte mac[] = { 0xDE, 0xAD, 0xBE, 0xEF, 0xFE, 0xED };
 
+// substitute an address on your own network here
+byte ip[] = { 192, 168, 2, 250 };
+
 // Your Token to Tweet (get it from http://arduino-tweet.appspot.com/)
-Twitter twitter("<<< your token here >>>");
+Twitter twitter("YOUR-TOKEN-HERE");
 
 // Message to post
 char msg[] = "Hello, World! I'm Arduino!";
@@ -14,7 +19,7 @@ char msg[] = "Hello, World! I'm Arduino!";
 void setup()
 {
   delay(1000);
-  EthernetDHCP.begin(mac);
+  Ethernet.begin(mac, ip);
   Serial.begin(9600);
   
   Serial.println("connecting ...");
@@ -33,5 +38,4 @@ void setup()
 
 void loop()
 {
-  EthernetDHCP.maintain();
 }

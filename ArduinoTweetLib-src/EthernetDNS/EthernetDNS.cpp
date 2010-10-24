@@ -18,21 +18,15 @@
 //  <http://www.gnu.org/licenses/>.
 //
 
+// 2010-Oct-24  Modified by NeoCat :
+//   Use Udp library included in Arduino IDE 0019 or later.
+
 #include <string.h>
 #include <stdlib.h>
-
+#include "EthernetDNS.h"
 extern "C" {
    #include "wiring.h"
-   
-   #include "../Ethernet/utility/types.h"
-   #include "../Ethernet/utility/socket.h"
-   #include "../Ethernet/utility/spi.h"
-   #include "../Ethernet/utility/w5100.h"
-   
-   #include "utility/EthernetDnsUtil.h"
 }
-
-#include "EthernetDNS.h"
 
 // this is one of Google's public DNS servers
 #define  DEFAULT_DNS_SERVER      {8, 8, 8, 8}
@@ -86,7 +80,6 @@ EthernetDNSClass::EthernetDNSClass()
 
 EthernetDNSClass::~EthernetDNSClass()
 {
-   (void)this->_closeDNSSession();
 }
 
 void EthernetDNSClass::setDNSServer(const byte dnsServerIpAddr[4])
@@ -95,46 +88,6 @@ void EthernetDNSClass::setDNSServer(const byte dnsServerIpAddr[4])
       memcpy(this->_dnsData.serverIpAddr, (const char*)dnsServerIpAddr, 4);
 }
 
-// return values:
-// 1 on success
-// 0 otherwise
-int EthernetDNSClass::_startDNSSession()
-{
-   (void)this->_closeDNSSession();
-   
-   int i;
-   for (i = NUM_SOCKETS-1; i>=0; i--)
-      if (SOCK_CLOSED == IINCHIP_READ(Sn_SR(i))) {
-         if (socket(i, Sn_MR_UDP, DNS_CLIENT_PORT, 0) > 0) {
-            this->_socket = i;
-            break;
-         }
-      }
-
-   if (this->_socket < 0)
-      return 0;
-	
-	uint16 port = DNS_SERVER_PORT;
-
-   for (i=0; i<4; i++)
-      IINCHIP_WRITE((Sn_DIPR0(this->_socket) + i), this->_dnsData.serverIpAddr[i]);
-
-   IINCHIP_WRITE(Sn_DPORT0(this->_socket), (uint8)((port & 0xff00) >> 8));
-   IINCHIP_WRITE((Sn_DPORT0(this->_socket) + 1), (uint8)(port & 0x00ff));
-   
-   return 1;
-}
-
-// return values:
-// 1 on success
-// 0 otherwise
-int EthernetDNSClass::_closeDNSSession()
-{
-   if (this->_socket > -1)
-      close(this->_socket);
-
-   this->_socket = -1;
-}
 
 // return value:
 // A DNSError_t (DNSSuccess on success, something else otherwise)
@@ -146,11 +99,7 @@ DNSError_t EthernetDNSClass::sendDNSQuery(const char* hostName)
    if (this->_state != DNSStateIdle) {
       statusCode = DNSAlreadyProcessingQuery;
    } else {
-      if (this->_startDNSSession() < 0) {
-         statusCode = DNSSocketError;
-      } else {
-         statusCode = this->_sendDNSQueryPacket(hostName);
-      }
+      statusCode = this->_sendDNSQueryPacket(hostName);
    }
    
    return statusCode;
@@ -161,13 +110,13 @@ DNSError_t EthernetDNSClass::sendDNSQuery(const char* hostName)
 // in "int" mode: positive on success, negative on error
 DNSError_t EthernetDNSClass::_sendDNSQueryPacket(const char* hostName)
 {
+   Udp.begin(DNS_CLIENT_PORT);
+   
    DNSError_t statusCode = DNSSuccess;
-   uint16_t ptr = 0;
 #if defined(_USE_MALLOC_)
    DNSHeader_t* dnsHeader = NULL;
 #else
-   DNSHeader_t dnsHeaderBuf;
-   DNSHeader_t* dnsHeader = &dnsHeaderBuf;
+   DNSHeader_t dnsHeader[4]; // [1-3] is buffer for data
 #endif
    const char* p1, *p2;
    char* p3;
@@ -178,37 +127,31 @@ DNSError_t EthernetDNSClass::_sendDNSQueryPacket(const char* hostName)
       statusCode = DNSInvalidArgument;
       goto errorReturn;
    }
-   
-   ptr = IINCHIP_READ(Sn_TX_WR0(this->_socket));
- 	ptr = ((ptr & 0x00ff) << 8) + IINCHIP_READ(Sn_TX_WR0(this->_socket) + 1);
 
 #if defined(_USE_MALLOC_)
-   dnsHeader = (DNSHeader_t*)malloc(sizeof(DNSHeader_t));
+   dnsHeader = (DNSHeader_t*)malloc(sizeof(DNSHeader_t)*4);
    if (NULL == dnsHeader) {
       statusCode = DNSOutOfMemory;
       goto errorReturn;
    }
 #endif
           
-   memset(dnsHeader, 0, sizeof(DNSHeader_t));
+   memset(dnsHeader, 0, sizeof(DNSHeader_t)*4);
    
    dnsHeader->xid = dns_htons(++this->_dnsData.xid);
    dnsHeader->recursionDesired = 1;
    dnsHeader->queryCount = dns_htons(1);
    dnsHeader->opCode = DNSOpQuery;
    
-   write_data(this->_socket, (vuint8*)dnsHeader, (vuint8*)ptr, sizeof(DNSHeader_t));
-   ptr += sizeof(DNSHeader_t);
-   
    p1 = hostName;
    bsize = sizeof(DNSHeader_t);
-   buf = (uint8_t*)dnsHeader;
+   buf = (uint8_t*)&dnsHeader[1];
+   p3 = (char*)buf;
    while(*p1) {
       c = 1;
       p2 = p1;
       while (0 != *p2 && '.' != *p2) { p2++; c++; };
 
-      p3 = (char*)buf;
       i = c;
       len = bsize-1;
       *p3++ = (uint8_t)--i;
@@ -216,35 +159,20 @@ DNSError_t EthernetDNSClass::_sendDNSQueryPacket(const char* hostName)
          *p3++ = *p1++;
          
          if (--len <= 0) {
-            write_data(this->_socket, (vuint8*)buf, (vuint8*)ptr, bsize);
-            ptr += bsize;
             len = bsize;
-            p3 = (char*)buf;
          }
       }
       
       while ('.' == *p1)
          ++p1;
-      
-      if (len != bsize) {
-         write_data(this->_socket, (vuint8*)buf, (vuint8*)ptr, bsize-len);
-         ptr += bsize-len;
-      }
    }
       
    // first byte is the query string's zero termination, then qtype and class follow.
-   buf[0] = buf[1] = buf[3] = 0;
-   buf[2] = buf[4] = 1;
+   p3[0] = p3[1] = p3[3] = 0;
+   p3[2] = p3[4] = 1;
 
-   write_data(this->_socket, (vuint8*)buf, (vuint8*)ptr, 5);
-   ptr += 5;
-
-   IINCHIP_WRITE(Sn_TX_WR0(this->_socket), (vuint8)((ptr & 0xff00) >> 8));
-   IINCHIP_WRITE((Sn_TX_WR0(this->_socket) + 1), (vuint8)(ptr & 0x00ff));
-   
-   IINCHIP_WRITE(Sn_CR(this->_socket), Sn_CR_SEND);
-
-   while(IINCHIP_READ(Sn_CR(this->_socket)));
+   Udp.sendPacket((uint8_t*)dnsHeader, p3+5-(char*)dnsHeader,
+                  this->_dnsData.serverIpAddr, DNS_SERVER_PORT);
    
    if (_state == DNSStateIdle) {
       this->_dnsData.lastQueryFirstXid = this->_dnsData.xid;
@@ -270,16 +198,16 @@ errorReturn:
 // in "int" mode: positive on success, negative on error
 DNSError_t EthernetDNSClass::pollDNSReply(byte ipAddr[4])
 {
-   DNSError_t statusCode = DNSSuccess;
+   DNSError_t statusCode = DNSTryLater;
 #if defined(_USE_MALLOC_)
+   uint8_t* buf;
    DNSHeader_t* dnsHeader = NULL;
 #else
-   DNSHeader_t dnsHeaderBuf;
-   DNSHeader_t* dnsHeader = &dnsHeaderBuf;
+   uint8_t buf[256];
+   DNSHeader_t* dnsHeader = (DNSHeader_t*)buf;
 #endif
-   uint8_t* buf;
    uint32_t svr_addr;
-   uint16_t svr_port, udp_len, ptr, qCnt, aCnt;
+   uint16_t svr_port, udp_len, qCnt, aCnt;
    
    if (DNSStateQuerySent != this->_state) {
       statusCode = DNSNothingToDo;
@@ -291,33 +219,25 @@ DNSError_t EthernetDNSClass::pollDNSReply(byte ipAddr[4])
       goto errorReturn;
    }
    
-   if (0 == (IINCHIP_READ(Sn_RX_RSR0(this->_socket))) &&
-       0 == (IINCHIP_READ(Sn_RX_RSR0(this->_socket) + 1))) {
+   udp_len = Udp.available();
+   if (0 == udp_len) {
       statusCode = DNSTryLater;
       goto errorReturn;
    }
 
 #if defined(_USE_MALLOC_)
-   dnsHeader = (DNSHeader_t*)malloc(sizeof(DNSHeader_t));
+   buf = (DNSHeader_t*)malloc(udp_len);
+   dnsHeader = (uint8_t*)buf;
    if (NULL == dnsHeader) {
       statusCode = DNSOutOfMemory;
       goto errorReturn;
    }
+#else
+   udp_len = min(sizeof(buf), udp_len);
 #endif
    
-   ptr = IINCHIP_READ(Sn_RX_RD0(this->_socket));
-   ptr = ((ptr & 0x00ff) << 8) + IINCHIP_READ(Sn_RX_RD0(this->_socket) + 1);
-
    // read UDP header
-   buf = (uint8_t*)dnsHeader;
-   read_data(this->_socket, (vuint8*)ptr, (vuint8*)buf, 8);
-   ptr += 8;
-
-   memcpy(&svr_addr, buf, sizeof(uint32_t));
-   *((uint16_t*)&svr_port) = dns_ntohs(*((uint32_t*)(buf+4)));
-   *((uint16_t*)&udp_len) = dns_ntohs(*((uint32_t*)(buf+6)));
-   
-   read_data(this->_socket, (vuint8*)ptr, (vuint8*)dnsHeader, sizeof(DNSHeader_t));
+   Udp.readPacket(buf, udp_len, (uint8_t*)&svr_addr, &svr_port);
    
    if (0 != dnsHeader->responseCode) {
       if (3 == dnsHeader->responseCode)
@@ -340,48 +260,37 @@ DNSError_t EthernetDNSClass::pollDNSReply(byte ipAddr[4])
           statusCode = DNSServerError; // if we don't find our A record answer, the server messed up.
                     
           int i, offset = sizeof(DNSHeader_t);
-          uint8_t* buf = (uint8_t*)dnsHeader;
           int rLen;
           
           // read over the query section and answer section, stop on the first a record
           for (i=0; i<qCnt+aCnt; i++) {
              do {
-                read_data(this->_socket, (vuint8*)(ptr+offset), (vuint8*)buf, 1);
-                rLen = buf[0];
+                rLen = buf[offset];
                 if (rLen > 128) // handle DNS name compression
                    offset += 2;
                 else
                    offset += rLen + 1;
-             } while (rLen > 0 && rLen <= 128);
+             } while (rLen > 0 && rLen <= 128 && offset < udp_len);
                           
              // if this is an answer record, there are more fields to it.
              if (i >= qCnt) {
-                read_data(this->_socket, (vuint8*)(ptr+offset), (vuint8*)buf, 4);
-                offset += 8; // skip over the 4-byte TTL field
-                read_data(this->_socket, (vuint8*)(ptr+offset), (vuint8*)&buf[4], 2);
-                offset += 2;
-                
                 // if class and qtype match, and data length is 4, this is an IP address, and
                 // we're done.
-                if (1 == buf[1] && 1 == buf[3] && 4 == buf[5]) {
-                   read_data(this->_socket, (vuint8*)(ptr+offset), (vuint8*)ipAddr, 4);
+                memcpy((uint8_t*)ipAddr, buf+offset+16, 4);
+                if (1 == buf[offset+1] && 1 == buf[offset+3] && 4 == buf[offset+9]) {
+                   memcpy((uint8_t*)ipAddr, buf+offset+10, 4);
                    statusCode = DNSSuccess;
                    break;
+                // skip CNAME record.
+                } else if (5 == buf[offset+1]) {
+                   offset += buf[offset+9] + 10;
                 }
              } else
                 offset += 4; // eat the query type and class fields of a query
+             if (offset >= udp_len) break;
           }
    }
    
-   ptr += udp_len;
-   
-   IINCHIP_WRITE(Sn_RX_RD0(this->_socket),(vuint8)((ptr & 0xff00) >> 8));
-   IINCHIP_WRITE((Sn_RX_RD0(this->_socket) + 1),(vuint8)(ptr & 0x00ff));
-
-   IINCHIP_WRITE(Sn_CR(this->_socket),Sn_CR_RECV);
-
-   while(IINCHIP_READ(Sn_CR(this->_socket)));
-
 errorReturn:
 
    if (DNSTryLater == statusCode) {
@@ -391,7 +300,6 @@ errorReturn:
          statusCode = DNSTimedOut;
       }
    } else {
-      this->_closeDNSSession();
       this->_state = DNSStateIdle;
    }
 

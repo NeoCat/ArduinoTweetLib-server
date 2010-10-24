@@ -7,6 +7,9 @@
   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. 
  */
 
+// ver1.2 - Use <string.h>
+
+#include <string.h>
 #include "Twitter.h"
 
 #define LIB_DOMAIN "arduino-tweet.appspot.com"
@@ -14,13 +17,6 @@ static uint8_t server[] = {0,0,0,0}; // IP address of LIB_DOMAIN
 
 Twitter::Twitter(const char *token) : client(server, 80), token(token)
 {
-}
-
-static int strlen(const char *msg)
-{
-	int i = 0;
-	while (msg[i++]);
-	return i-1;
 }
 
 bool Twitter::post(const char *msg)

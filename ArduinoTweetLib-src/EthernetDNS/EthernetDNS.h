@@ -18,11 +18,18 @@
 //  <http://www.gnu.org/licenses/>.
 //
 
+// 2010-Oct-24  Modified by NeoCat :
+//   Use Udp library included in Arduino IDE 0019 or later.
+
 #if !defined(__ETHERNET_DNS_H__)
 #define __ETHERNET_DNS_H__ 1
 
+#include <SPI.h>
+#include <Ethernet.h>
+#include <Udp.h>
 extern "C" {
    #include <inttypes.h>
+   #include "utility/EthernetDNSUtil.h"
 }
 
 typedef uint8_t byte;
@@ -63,8 +70,6 @@ private:
    
    DNSError_t _sendDNSQueryPacket(const char* hostName);
    
-   int _startDNSSession();
-   int _closeDNSSession();
 public:
    EthernetDNSClass();
    ~EthernetDNSClass();
