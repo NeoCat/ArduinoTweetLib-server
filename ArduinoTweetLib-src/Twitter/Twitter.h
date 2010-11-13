@@ -30,8 +30,8 @@ public:
 	Twitter(const char *user_and_passwd);
 	
 	bool post(const char *msg);
-	bool checkStatus(void);
-	int  wait(void);
+	bool checkStatus(Print *debug = NULL);
+	int  wait(Print *debug = NULL);
 	int  status(void) { return statusCode; }
 };
 

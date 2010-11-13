@@ -42,9 +42,12 @@ bool Twitter::post(const char *msg)
 	return true;
 }
 
-bool Twitter::checkStatus(void)
+bool Twitter::checkStatus(Print *debug)
 {
 	if (!client.connected()) {
+		if (debug)
+			while(client.available())
+				debug->print((char)client.read());
 		client.flush();
 		client.stop();
 		return false;
@@ -52,6 +55,8 @@ bool Twitter::checkStatus(void)
 	if (!client.available())
 		return true;
 	char c = client.read();
+	if (debug)
+		debug->print(c);
 	switch(parseStatus) {
 	case 0:
 		if (c == ' ') parseStatus++; break;  // skip "HTTP/1.1 "
@@ -66,8 +71,8 @@ bool Twitter::checkStatus(void)
 	return true;
 }
 
-int Twitter::wait(void)
+int Twitter::wait(Print *debug)
 {
-	while (checkStatus());
+	while (checkStatus(debug));
 	return statusCode;
 }

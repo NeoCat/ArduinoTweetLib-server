@@ -24,7 +24,10 @@ void setup()
   
   Serial.println("connecting ...");
   if (twitter.post(msg)) {
-    int status = twitter.wait();
+    // Specify &Serial to output received response to Serial.
+    // If no output is required, you can just omit the argument, e.g.
+    // int status = twitter.wait();
+    int status = twitter.wait(&Serial);
     if (status == 200) {
       Serial.println("OK.");
     } else {

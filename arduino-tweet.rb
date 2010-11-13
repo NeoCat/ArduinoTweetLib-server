@@ -118,9 +118,10 @@ post '/update' do
   status = URI.escape(params[:status], /[^-_.a-zA-Z\d]/n)
   update_url = APIBASE + "/statuses/update.json?status=#{status}"
   response = simple_oauth.post(update_url)
+  json = JSON(response.body) rescue json = {"error" => $!}
   unless response.code.to_i == 200
     status response.code
-    return haml "Error #{response.code}\n%br\nstatus=#{status}"
+    return haml "Error #{response.code}\n%br\nstatus=#{status}\n%br\n#{json['error']}"
   end
   haml 'OK'
 end
