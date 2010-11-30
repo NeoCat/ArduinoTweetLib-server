@@ -52,8 +52,9 @@ Post messages to Twitter (tweet) from <a target="arduino" href="http://www.ardui
 	<div class="cd" id="step3">
 	You can get this sketch from File menu > Examples > Twitter > SimplePost .<br>
 	Don't forget to add your token into the sketch.<br>
-	<b>Notice</b>: This example is for IDE 0019 or later.
-	<b>Notice</b>: the library uses this site as a proxy server for OAuth stuff. Your tweet may not be applied during maintenance of this site.
+	<b>Notice</b>: This example is for IDE 0019 or later.<br>
+	<b>Notice</b>: Twitter seems to reject repeated tweets with the same contenet (returns error 403).<br>
+	<b>Notice</b>: The library uses this site as a proxy server for OAuth stuff. Your tweet may not be applied during maintenance of this site.
 	<hr><code><pre>
 #include &lt;SPI.h&gt;
 #include &lt;Ethernet.h&gt;
