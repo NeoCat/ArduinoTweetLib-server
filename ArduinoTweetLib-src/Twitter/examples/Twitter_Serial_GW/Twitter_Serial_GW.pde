@@ -1,6 +1,7 @@
+#if defined(ARDUINO) && ARDUINO > 18   // Arduino 0019 or later
 #include <SPI.h>
+#endif
 #include <Ethernet.h>
-#include <Udp.h>
 #include <EthernetDNS.h>
 #include <Twitter.h>
 

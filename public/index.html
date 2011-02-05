@@ -33,18 +33,11 @@ Post messages to Twitter (tweet) from <a target="arduino" href="http://www.ardui
 <p class="step">Step <span class="n">2</span> : 
 	<a href="javascript:step2()">Add some Libraries to your Arduino IDE.</a>
 	<div class="cd" id="step2"><ul>
-	<li><b>for Arduino IDE 0019 or later</b><ul>
-		<li>Download the <a href="Library-Twitter-1.2.1.zip">Arduino Tweet Library</a> and put Twitter folder into ~/Documents/Arduino/libraries (Mac) or My Documents\Arduino\libraries\ (Windows). If there is no such folder, please create it.<br>
-		<li>Download the <a href="EthernetDNS-0019.zip">EthernetDNS Library</a> and install it.
-		<ul><li>EthernetDNS library in this archive is patched to work with Udp library in IDE 0019 or later. Original version (distributed at <a href="http://gkaindl.com/software/arduino-ethernet">gkaindl.com</a>) currently does not support IDE 0019 or later.</ul>
+		<li>Download the <a href="Library-Twitter-1.2.2.zip">Arduino Tweet Library</a> and put Twitter folder into ~/Documents/Arduino/libraries (Mac) or My Documents\Arduino\libraries\ (Windows). If there is no such folder, please create it.<br>
+		<li>Download the EthernetDNS Library from <a href="http://gkaindl.com/software/arduino-ethernet">gkaindl.com</a> and install it.
+		<li>Re-launch the IDE.
+		<li><a href="http://www.arduino.cc/en/Hacking/Libraries" class="ext" target="arduino">Detailed information about libraries installation</a>.
 	</ul>
-	<li><b>for Arduino IDE 0018 or earlier</b><ul>
-		<li>Download the <a href="ArduinoTweetLib.zip">Arduino Tweet Library</a> and put Twitter folder into ~/Documents/Arduino/libraries (Mac) or My Documents\Arduino\libraries\ (Windows). If there is no such folder, please create it.<br>
-		<li>Download the <a href="ArduinoEthernet.zip">Arduino Ethernet Library</a> and install <b><i>EthernetDNS</i></b> and <b><i>EthernetDHCP</i></b>.
-		<ul><li>EthernetDNS library in this archive is patched to avoid an error by CNAME entry in the DNS response. <b>Twitter library won't work without this patch</b>, so please replace it if you already have the library. Original version is distributed at <a href="http://gkaindl.com/software/arduino-ethernet">gkaindl.com</a>.</ul>
-	</ul>
-	<li>Re-launch the IDE.
-	<li><a href="http://www.arduino.cc/en/Hacking/Libraries" class="ext" target="arduino">Detailed information about libraries installation</a>.
 	</div>
 </p>
 <p class="step">Step <span class="n">3</span> : 
@@ -52,13 +45,13 @@ Post messages to Twitter (tweet) from <a target="arduino" href="http://www.ardui
 	<div class="cd" id="step3">
 	You can get this sketch from File menu > Examples > Twitter > SimplePost .<br>
 	Don't forget to add your token into the sketch.<br>
-	<b>Notice</b>: This example is for IDE 0019 or later.<br>
 	<b>Notice</b>: Twitter seems to reject repeated tweets with the same contenet (returns error 403).<br>
 	<b>Notice</b>: The library uses this site as a proxy server for OAuth stuff. Your tweet may not be applied during maintenance of this site.
 	<hr><code><pre>
+#if defined(ARDUINO) &amp;&amp; ARDUINO &gt; 18   // Arduino 0019 or later
 #include &lt;SPI.h&gt;
+#endif
 #include &lt;Ethernet.h&gt;
-#include &lt;UDP.h&gt;
 #include &lt;EthernetDNS.h&gt;
 #include &lt;Twitter.h&gt;
 
