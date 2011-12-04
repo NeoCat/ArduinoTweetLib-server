@@ -1,14 +1,16 @@
-#if defined(ARDUINO) && ARDUINO > 18   // Arduino 0019 or later
-#include <SPI.h>
-#endif
+#include <SPI.h> // needed in Arduino 0019 or later
 #include <Ethernet.h>
-#include <EthernetDNS.h>
 #include <Twitter.h>
+
+// The includion of EthernetDNS is not needed in Arduino IDE 1.0 or later.
+// Please uncomment below in Arduino IDE 0022 or earlier.
+//#include <EthernetDNS.h>
+
 
 // Ethernet Shield Settings
 byte mac[] = { 0xDE, 0xAD, 0xBE, 0xEF, 0xFE, 0xED };
 
-// substitute an address on your own network here
+// If you don't specify the IP address, DHCP is used(only in Arduino 1.0 or later).
 byte ip[] = { 192, 168, 2, 250 };
 
 // Your Token to Tweet (get it from http://arduino-tweet.appspot.com/)
@@ -21,6 +23,8 @@ void setup()
 {
   delay(1000);
   Ethernet.begin(mac, ip);
+  // or you can use DHCP for autoomatic IP address configuration.
+  // Ethernet.begin(mac);
   Serial.begin(9600);
   
   Serial.println("connecting ...");

@@ -33,8 +33,8 @@ Post messages to Twitter (tweet) from <a target="arduino" href="http://www.ardui
 <p class="step">Step <span class="n">2</span> : 
 	<a href="javascript:step2()">Add some Libraries to your Arduino IDE.</a>
 	<div class="cd" id="step2"><ul>
-		<li>Download the <a href="Library-Twitter-1.2.2.zip">Arduino Tweet Library</a> and put Twitter folder into ~/Documents/Arduino/libraries (Mac) or My Documents\Arduino\libraries\ (Windows). If there is no such folder, please create it.<br>
-		<li>Download the EthernetDNS Library from <a href="http://gkaindl.com/software/arduino-ethernet">gkaindl.com</a> and install it.
+		<li>Download the <a href="Library-Twitter-1.3.zip">Arduino Tweet Library</a> and put Twitter folder into ~/Documents/Arduino/libraries (Mac) or My Documents\Arduino\libraries\ (Windows). If there is no such folder, please create it.<br>
+		<li>If you are using Arduino IDE 0022 or earlier, please download EthernetDNS Library from <a href="http://gkaindl.com/software/arduino-ethernet">gkaindl.com</a> and install it. You don't need this with Arduino 1.0 or later.
 		<li>Re-launch the IDE.
 		<li><a href="http://www.arduino.cc/en/Hacking/Libraries" class="ext" target="arduino">Detailed information about libraries installation</a>.
 	</ul>
@@ -52,7 +52,7 @@ Post messages to Twitter (tweet) from <a target="arduino" href="http://www.ardui
 #include &lt;SPI.h&gt;
 #endif
 #include &lt;Ethernet.h&gt;
-#include &lt;EthernetDNS.h&gt;
+//#include &lt;EthernetDNS.h&gt;  Only needed in Arduino 0022 or earlier
 #include &lt;Twitter.h&gt;
 
 byte mac[] = { 0xDE, 0xAD, 0xBE, 0xEF, 0xFE, 0xED };
@@ -96,7 +96,7 @@ See <a href="http://www.arduino.cc/playground/Code/TwitterLibrary">Arduino: Play
 <p class="step">
 Tweet Library for Arduino is distributed under MIT license.<br>
 <div id="emp"><small>
-<p>Copyright (c) 2010 NeoCat</p>
+<p>Copyright (c) 2010-2011 NeoCat</p>
 
 <p>Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -123,6 +123,6 @@ ArduinoEthernet Library is distributed under <a href="http://www.gnu.org/license
 <br>
 <br>
 </div>
-<center><small>&copy;2010 <a href="http://twitter.com/NeoCat">@NeoCat</small></center>
+<center><small>&copy;2010-2011 <a href="http://twitter.com/NeoCat">@NeoCat</small></center>
 </body>
 </html>
