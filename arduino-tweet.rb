@@ -30,6 +30,7 @@ class Account
   property :date, Time, :default => lambda { |r, p| Time.now } # must be a Proc  
 end
 
+DataMapper.finalize
 
 template :layout do
   <<-EOF
