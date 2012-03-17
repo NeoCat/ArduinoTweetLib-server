@@ -57,7 +57,15 @@ def base_url
 end
 
 error do
-  'Error - ' + request.env['sinatra.error'].name
+  if request.env['sinatra.error']
+    begin
+      'Error - ' + request.env['sinatra.error'].name
+    rescue
+      'Error - ' + request.env['sinatra.error'].message
+    end
+  else
+    'Unknown Error'
+  end
 end
 
 get '/request_token' do
