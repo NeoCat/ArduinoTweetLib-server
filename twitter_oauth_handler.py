@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 """
 Twitter OAuth Support for Google App Engine Apps.
 
@@ -84,7 +85,11 @@ def create_uuid():
     return 'id-%s' % uuid4()
 
 def encode(text):
-    return urlquote(str(text), '')
+    if isinstance(text, unicode):
+        arg = str(text.encode('UTF-8'))
+    else:
+        arg = str(text)
+    return urlquote(arg, '')
 
 def twitter_specifier_handler(client):
     return client.get('/account/verify_credentials')['screen_name']
@@ -314,7 +319,7 @@ class OAuthClient(object):
             key, message, sha1
             ).digest().encode('base64')[:-1]
 
-        return urlencode(kwargs)
+        return urlencode(dict([k, v.encode('utf-8') if isinstance(v, unicode) else v] for k, v in kwargs.items()))
 
     # who stole the cookie from the cookie jar?
 
