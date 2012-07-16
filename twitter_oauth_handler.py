@@ -40,7 +40,8 @@ from demjson import decode as decode_json
 
 from google.appengine.api.urlfetch import fetch as urlfetch, GET, POST
 from google.appengine.ext import db
-from google.appengine.ext.webapp import RequestHandler, WSGIApplication
+from google.appengine.api import memcache
+import webapp2 as webapp
 
 # ------------------------------------------------------------------------------
 # configuration -- SET THESE TO SUIT YOUR APP!!
@@ -150,16 +151,22 @@ class OAuthClient(object):
 
     def set_token(self, token):
 
-        oauth_token = OAuthAccessToken.all().filter(
-            'oauth_token = ', token).fetch(1)
+        secret = memcache.get(token)
+        if secret is not None:
+            self.token = OAuthAccessToken(oauth_token = token,
+                                          oauth_token_secret = secret)
+            return self.token
+        oauth_token = OAuthAccessToken.all().filter('oauth_token = ', token).fetch(1)
         if not oauth_token:
             old_token = Accounts.all().filter('token =', token).fetch(1)
             if len(old_token) == 1:
-              self.token = OAuthAccessToken(oauth_token = old_token[0].token,
-                                            oauth_token_secret = old_token[0].secret)
-              return self.token
+                memcache.set(key=token, value=old_token[0].secret)
+                self.token = OAuthAccessToken(oauth_token = old_token[0].token,
+                                              oauth_token_secret = old_token[0].secret)
+                return self.token
             return None
         self.token = oauth_token[0]
+        memcache.set(key=token, value=self.token.oauth_token_secret)
         return self.token
 
     def get(self, api_method, http_method='GET', expected_status=(200,), **extra_params):
@@ -222,7 +229,8 @@ class OAuthClient(object):
             **dict(token.split('=') for token in token_info.split('&'))
             )
 
-        token.put()
+        # token.put()
+        memcache.set('request_token:'+token.oauth_token, token.oauth_token_secret, 300)
 
         if self.oauth_callback:
             oauth_callback = {'oauth_callback': self.oauth_callback}
@@ -235,13 +243,20 @@ class OAuthClient(object):
 
     def callback(self):
 
+        write = self.handler.response.out.write
         oauth_token = self.handler.request.get("oauth_token")
 
         if not oauth_token:
             return get_request_token()
 
-        oauth_token = OAuthRequestToken.all().filter(
-            'oauth_token =', oauth_token).fetch(1)[0]
+        #oauth_token = OAuthRequestToken.all().filter(
+        #    'oauth_token =', oauth_token).fetch(1)[0]
+        secret = memcache.get('request_token:'+oauth_token)
+        if secret is None:
+            self.handler.error(500)
+            write("Error - Request token is invalid! [" + oauth_token + "]")
+            return ""
+        oauth_token = OAuthRequestToken(oauth_token=oauth_token, oauth_token_secret = secret)
 
         token_info = self.get_data_from_signed_url(
             self.service_info['access_token_url'], oauth_token
@@ -250,6 +265,7 @@ class OAuthClient(object):
         self.token = OAuthAccessToken(
             **dict(token.split('=') for token in token_info.split('&'))
             )
+        memcache.set(key=self.token.oauth_token, value=self.token.oauth_token_secret)
 
         if 'specifier_handler' in self.service_info:
             specifier = self.token.specifier = self.service_info['specifier_handler'](self)
@@ -257,24 +273,26 @@ class OAuthClient(object):
                 'specifier =', specifier)
             db.delete(old)
 
-        db.delete(oauth_token)
+        #db.delete(oauth_token)
+        memcache.delete('request_token:'+oauth_token.oauth_token)
 
         self.token.put()
         self.expire_cookie()
-        write = self.handler.response.out.write
-        write('<html><head><title></title></head>')
-        write('<body><h3>Your token is</h3><div>')
+        write('<html><head><title>Arduino Tweet Lib - token</title><link rel="stylesheet" type="text/css" href="/style.css" charset="UTF-8"></head>')
+        write('<body><h3>Your token is:</h3><div id="emp">')
         write(self.token.oauth_token)
         write('</div></body>')
         write('</html>')
+        return ""
 
     def cleanup(self):
-        query = OAuthRequestToken.all().filter(
-            'created <', datetime.now() - EXPIRATION_WINDOW
-            )
-        count = query.count(CLEANUP_BATCH_SIZE)
-        db.delete(query.fetch(CLEANUP_BATCH_SIZE))
-        return "Cleaned %i entries" % count
+        #query = OAuthRequestToken.all().filter(
+        #    'created <', datetime.now() - EXPIRATION_WINDOW
+        #    )
+        #count = query.count(CLEANUP_BATCH_SIZE)
+        #db.delete(query.fetch(CLEANUP_BATCH_SIZE))
+        #return "Cleaned %i entries" % count
+        return "Not supported"
 
     # request marshalling
 
@@ -346,7 +364,7 @@ class OAuthClient(object):
 # oauth handler
 # ------------------------------------------------------------------------------
 
-class OAuthHandler(RequestHandler):
+class OAuthHandler(webapp.RequestHandler):
 
     def get(self, service, action=''):
 
@@ -372,7 +390,7 @@ HEADER = """
 
 FOOTER = "</body></html>"
 
-class MainHandler(RequestHandler):
+class MainHandler(webapp.RequestHandler):
 
     def get(self):
 
@@ -397,9 +415,10 @@ class MainHandler(RequestHandler):
         write("<strong>API Rate Limit Status:</strong> %r" % rate_info)
 
         write(FOOTER)
+        return ""
 
 
-class UpdateHandler(RequestHandler):
+class UpdateHandler(webapp.RequestHandler):
 
     def get(self):
 
@@ -409,16 +428,32 @@ class UpdateHandler(RequestHandler):
 
         token = self.request.get('token')
         if not token:
-            write('Error - token is not specified')
+            self.error(403)
+            write('Error 403 - token is not specified')
             return
         
         status = self.request.get('status')
         if not status:
-            write('Error - status is not specified')
+            self.error(403)
+            write('Error 403 - status is not specified')
             return
         
-        if not client.set_token(token):
-            write('Error - token is invalid')
+        access_token = client.set_token(token)
+        if not access_token:
+            self.error(403)
+            write('Error 403 - token is invalid')
+            return
+
+        d = datetime.today()
+        qtime = str(int(d.strftime('%s'))/600)
+        qkey = 'quota:'+qtime+":"+token
+        quota = memcache.incr(qkey)
+        if quota is None:
+            memcache.add(qkey, 1, 600)
+        elif quota > 50:
+            self.error(503)
+            write("Error 503 - Too many access")
+            return
 
         try:
             result = client.post('/statuses/update', status = status)
@@ -436,18 +471,12 @@ class UpdateHandler(RequestHandler):
         return self.get()
 
 # ------------------------------------------------------------------------------
-# self runner -- gae cached main() function
+# Application specification
 # ------------------------------------------------------------------------------
 
-def main():
-
-    application = WSGIApplication([
+app = webapp.WSGIApplication([
        ('/oauth/(.*)/(.*)', OAuthHandler),
        ('/', MainHandler),
        ('/update', UpdateHandler)
        ], debug=True)
 
-    CGIHandler().run(application)
-
-if __name__ == '__main__':
-    main()

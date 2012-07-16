@@ -45,8 +45,6 @@ Post messages to Twitter (tweet) from <a target="arduino" href="http://www.ardui
 	<div class="cd" id="step3">
 	You can get this sketch from File menu > Examples > Twitter > SimplePost .<br>
 	Don't forget to add your token into the sketch.<br>
-	<b>Notice</b>: Twitter seems to reject repeated tweets with the same contenet (returns error 403).<br>
-	<b>Notice</b>: The library uses this site as a proxy server for OAuth stuff. Your tweet may not be applied during maintenance of this site.
 	<hr><code><pre>
 #if defined(ARDUINO) &amp;&amp; ARDUINO &gt; 18   // Arduino 0019 or later
 #include &lt;SPI.h&gt;
@@ -87,6 +85,11 @@ void loop()
 	</div>
 </p>
 <br>
+<h3>Notice</h3><ul>
+	<li>The library uses this site as a proxy server for OAuth stuff. Your tweet may not be applied during maintenance of this site.
+	<li><b style="color:red">Please avoid sending more than 1 request per minute</b> not to overload the server.</span>
+	<li>Twitter seems to reject repeated tweets with the same contenet (returns error 403).
+</ul>
 <h3>Reference</h3>
 <p class="step">
 See <a href="http://www.arduino.cc/playground/Code/TwitterLibrary">Arduino: Playground</a>

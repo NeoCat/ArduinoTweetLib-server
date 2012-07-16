@@ -1,8 +1,8 @@
-application: arduino-tweet
+application: arduino-tweet-hrd
 version: 1
-runtime: python
+runtime: python27
 api_version: 1
-threadsafe: no
+threadsafe: yes
 
 handlers:
 - url: /
@@ -10,10 +10,14 @@ handlers:
   upload: public/index\.html
 
 - url: /oauth/.*
-  script: twitter_oauth_handler.py
+  script: twitter_oauth_handler.app
 
 - url: /update
-  script: twitter_oauth_handler.py
+  script: twitter_oauth_handler.app
 
 - url: /
   static_dir: public
+
+error_handlers:
+  - error_code: dos_api_denial
+    file: dos.html
