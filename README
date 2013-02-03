@@ -8,15 +8,18 @@ This code is a server for ArduinoTweetLib for Google AppEngine.
 
 2. Put your Twitter API Consumer key/secret into `twitter_oauth_handler.py'.
 
-3. In Twitter app settings, set `Callback URL' to your site:
+3. Create your own application on GAE at: https://appengine.google.com/
+
+4. In Twitter app settings, set `Callback URL' to your application:
     http://your-app-name.appspot.com/oauth/twitter/callback
 
-3. Change your application name in `app.yaml'.
+5. Change your application name in `app.yaml'.
 
-4. Start app server at localhost.
+6. Start app server at localhost to try out.
   $ dev_appserver.py .
+  After authentication, it will be redirected to your-app-name.appspot.com and authentication error occurs. You need to rewrite URL to localhost:8080 etc. manually.
 
-5. upload to GAE.
+7. Deploy the application to GAE.
   $ appcfg.py update .
 
 
