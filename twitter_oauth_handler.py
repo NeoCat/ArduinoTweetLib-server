@@ -53,9 +53,9 @@ OAUTH_APP_SETTINGS = {
         'consumer_key': '',
         'consumer_secret': '',
 
-        'request_token_url': 'https://twitter.com/oauth/request_token',
-        'access_token_url': 'https://twitter.com/oauth/access_token',
-        'user_auth_url': 'http://twitter.com/oauth/authorize',
+        'request_token_url': 'https://api.twitter.com/oauth/request_token',
+        'access_token_url': 'https://api.twitter.com/oauth/access_token',
+        'user_auth_url': 'https://api.twitter.com/oauth/authorize',
 
         'default_api_prefix': 'http://api.twitter.com/1.1',
         'default_api_suffix': '.json',
@@ -245,6 +245,7 @@ class OAuthClient(object):
 
         write = self.handler.response.out.write
         oauth_token = self.handler.request.get("oauth_token")
+        oauth_verifier = self.handler.request.get("oauth_verifier")
 
         if not oauth_token:
             return get_request_token()
@@ -259,7 +260,8 @@ class OAuthClient(object):
         oauth_token = OAuthRequestToken(oauth_token=oauth_token, oauth_token_secret = secret)
 
         token_info = self.get_data_from_signed_url(
-            self.service_info['access_token_url'], oauth_token
+            self.service_info['access_token_url'], oauth_token,
+            oauth_verifier = oauth_verifier
             )
 
         self.token = OAuthAccessToken(
