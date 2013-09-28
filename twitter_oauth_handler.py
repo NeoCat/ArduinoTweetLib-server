@@ -225,9 +225,13 @@ class OAuthClient(object):
             self.service_info['request_token_url'], **self.request_params
             )
 
-        token = OAuthRequestToken(
-            **dict(token.split('=') for token in token_info.split('&'))
+        try:
+            token = OAuthRequestToken(
+                **dict(token.split('=') for token in token_info.split('&'))
             )
+        except:
+            self.handler.error(500)
+            return "Error - Request token is invalid! [" + token_info + "]"
 
         # token.put()
         memcache.set('request_token:'+token.oauth_token, token.oauth_token_secret, 300)
