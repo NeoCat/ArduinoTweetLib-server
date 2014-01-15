@@ -57,7 +57,7 @@ OAUTH_APP_SETTINGS = {
         'access_token_url': 'https://api.twitter.com/oauth/access_token',
         'user_auth_url': 'https://api.twitter.com/oauth/authorize',
 
-        'default_api_prefix': 'http://api.twitter.com/1.1',
+        'default_api_prefix': 'https://api.twitter.com/1.1',
         'default_api_suffix': '.json',
         },
     }
