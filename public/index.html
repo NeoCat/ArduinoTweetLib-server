@@ -31,10 +31,9 @@ Post messages to Twitter (tweet) from <a target="arduino" href="http://www.ardui
 <p class="step">Step <span class="n">1</span> : 
 	<a target="twitter" href="/oauth/twitter/login">Get a token to post a message using OAuth.</a></p>
 <p class="step">Step <span class="n">2</span> : 
-	<a href="javascript:step2()">Add some Libraries to your Arduino IDE.</a>
+	<a href="javascript:step2()">Add the Twitter Library to your Arduino IDE.</a>
 	<div class="cd" id="step2"><ul>
-		<li>Download the <a href="Library-Twitter-1.3.zip">Arduino Tweet Library</a> and put Twitter folder into ~/Documents/Arduino/libraries (Mac) or My Documents\Arduino\libraries\ (Windows). If there is no such folder, please create it.<br>
-		<li>If you are using Arduino IDE 0022 or earlier, please download EthernetDNS Library from <a href="http://gkaindl.com/software/arduino-ethernet">gkaindl.com</a> and install it. You don't need this with Arduino 1.0 or later.
+		<li>Download <a href="https://github.com/NeoCat/Arduno-Twitter-library">the Arduino Tweet Library</a>. Rename the folder to "Twitter" and put it into ~/Documents/Arduino/libraries (Mac) or My Documents\Arduino\libraries\ (Windows). If there is no such folder, please create it.<br>
 		<li>Re-launch the IDE.
 		<li><a href="http://www.arduino.cc/en/Hacking/Libraries" class="ext" target="arduino">Detailed information about libraries installation</a>.
 	</ul>
@@ -63,7 +62,7 @@ void setup()
   delay(1000);
   Ethernet.begin(mac, ip);
   Serial.begin(9600);
-  
+
   Serial.println("connecting ...");
   if (twitter.post(msg)) {
     int status = twitter.wait();
